@@ -1,0 +1,56 @@
+{
+  "auth": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "endpoint": "/driver-analytics/cm/api/auth",
+    "client_id": "638259cc-ab9d-4e52-9d2c-a3539426beb2",
+    "client_secret": "xMrdSyK1sOapVJX9nRLCPvQdJPHfij7HCEchHGyl7MKWgKS95CfMm0W5V5ATIFFC+FefjPx1fGyLROYAeCvniA=="
+  },
+
+  "prediction_service": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "url_template": "/driver-analytics/data/api/predict-result/{id}? &from={from_date}&to={to_date}&application=default"
+  },
+
+  "decryption_service": {
+    "base_url": "https://mscd-dev-prog-da-pred-af.azurewebsites.net",
+    "endpoint": "/api/decrypt",
+    "client_id": "638259cc-ab9d-4e52-9d2c-a3539426beb2",
+    "client_secret": "xMrdSyK1sOapVJX9nRLCPvQdJPHfij7HCEchHGyl7MKWgKS95CfMm0W5V5ATIFFC+FefjPx1fGyLROYAeCvniA=="
+  },
+
+  "vehicle_registry": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "endpoint": "/driver-analytics/cm/api/customers"
+  },
+
+  "vld_auth": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "endpoint": "load-detection/cm/api/auth",
+    "client_id": "72ddc513-e180-49ac-a12b-8713e4fee5b6",
+    "client_secret": "Jx/Z2CRmX/MCJGtUJfq6lP1Z9Igz8XsSmcYG8PNVs8uHY85f2AM84fQdKtWRKS3DT99oyBiEMcZ7lo2k0s96ig=="
+  },
+
+  "vld_prediction_service": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "url_template": "/load-detection/data/api/vehicles/{id}?st={from_date}&et={to_date}"
+  },
+
+  "vld_decryption_service": {
+    "base_url": "https://mscd-dev-prog-da-pred-af.azurewebsites.net",
+    "endpoint": "/api/decrypt",
+    "client_id": "72ddc513-e180-49ac-a12b-8713e4fee5b6",
+    "client_secret": "Jx/Z2CRmX/MCJGtUJfq6lP1Z9Igz8XsSmcYG8PNVs8uHY85f2AM84fQdKtWRKS3DT99oyBiEMcZ7lo2k0s96ig=="
+  },
+
+  "vld_vehicle_registry": {
+    "base_url": "https://solutions-api.boschconnectedpowersolutions.com",
+    "endpoint": "/load-detection/cm/api/customers"
+  },
+
+  "database": {
+    "host": "localhost",
+    "user": "fleet_DA_VLD",
+    "password": "DA_VLD_1234",
+    "database": "fleet_analytics_DA_VLD"
+  }
+}
