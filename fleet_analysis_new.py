@@ -9,6 +9,7 @@ import threading
 import random
 import string
 import os
+from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
@@ -20,7 +21,7 @@ except ImportError:
     logging.warning("mysql-connector-python not found. Database features disabled.")
 
 CONFIG_FILE = 'config.json'
-PORT = 8000
+PORT = int(os.environ.get('PORT', 8000))
 MAX_WORKERS = 40
 FUEL_PRICE_PER_LITER = 99  # Updated fuel price in INR
 
@@ -1455,13 +1456,28 @@ def get_db_connection():
         with open(CONFIG_FILE, 'r') as f:
             config = json.load(f)
         db_conf = config.get('database', {})
+        db_url = os.environ.get('DATABASE_URL', '')
+
+        if db_url:
+            parsed = urlparse(db_url)
+            conn = mysql.connector.connect(
+                host=parsed.hostname,
+                port=parsed.port or 3306,
+                user=parsed.username,
+                password=parsed.password,
+                database=(parsed.path or '/').lstrip('/')
+            )
+            return conn
+
         # Environment variables can override config.json for cloud deployments.
-        db_host = os.environ.get('MYSQL_HOST', db_conf.get('host', 'localhost'))
-        db_user = os.environ.get('MYSQL_USER', db_conf.get('user', 'root'))
-        db_password = os.environ.get('MYSQL_PASSWORD', db_conf.get('password', ''))
-        db_name = os.environ.get('MYSQL_DATABASE', db_conf.get('database', 'fleet_analytics'))
+        db_host = os.environ.get('MYSQL_HOST') or os.environ.get('MYSQLHOST') or db_conf.get('host', 'localhost')
+        db_user = os.environ.get('MYSQL_USER') or os.environ.get('MYSQLUSER') or db_conf.get('user', 'root')
+        db_password = os.environ.get('MYSQL_PASSWORD') or os.environ.get('MYSQLPASSWORD') or db_conf.get('password', '')
+        db_name = os.environ.get('MYSQL_DATABASE') or os.environ.get('MYSQLDATABASE') or db_conf.get('database', 'fleet_analytics')
+        db_port = int(os.environ.get('MYSQL_PORT') or os.environ.get('MYSQLPORT') or 3306)
         conn = mysql.connector.connect(
             host=db_host,
+            port=db_port,
             user=db_user,
             password=db_password,
             database=db_name
@@ -2064,9 +2080,4 @@ def start_server():
         httpd.serve_forever()
 
 if __name__ == '__main__':
-    t = threading.Thread(target=start_server, daemon=True)
-    t.start()
-    try:
-        while True: pass
-    except KeyboardInterrupt:
-        logging.info("Stopping server...")
+    start_server()
