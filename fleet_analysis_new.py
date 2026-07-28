@@ -39,6 +39,65 @@ TOKEN_EXPIRY_SECONDS = 25 * 60
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
+def _get_env_or_default(name, default=''):
+    value = os.environ.get(name)
+    if value is None or value == '':
+        return default
+    return value
+
+
+def load_runtime_config():
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+    except Exception:
+        config = {}
+
+    config.setdefault('auth', {})
+    config.setdefault('prediction_service', {})
+    config.setdefault('decryption_service', {})
+    config.setdefault('vehicle_registry', {})
+    config.setdefault('vld_auth', {})
+    config.setdefault('vld_prediction_service', {})
+    config.setdefault('vld_decryption_service', {})
+    config.setdefault('vld_vehicle_registry', {})
+    config.setdefault('database', {})
+
+    config['auth']['base_url'] = _get_env_or_default('DA_AUTH_BASE_URL', config['auth'].get('base_url', ''))
+    config['auth']['endpoint'] = _get_env_or_default('DA_AUTH_ENDPOINT', config['auth'].get('endpoint', ''))
+    config['auth']['client_id'] = _get_env_or_default('DA_AUTH_CLIENT_ID', config['auth'].get('client_id', ''))
+    config['auth']['client_secret'] = _get_env_or_default('DA_AUTH_CLIENT_SECRET', config['auth'].get('client_secret', ''))
+
+    config['prediction_service']['base_url'] = _get_env_or_default('DA_PREDICTION_BASE_URL', config['prediction_service'].get('base_url', ''))
+    config['prediction_service']['url_template'] = _get_env_or_default('DA_PREDICTION_URL_TEMPLATE', config['prediction_service'].get('url_template', ''))
+
+    config['decryption_service']['base_url'] = _get_env_or_default('DA_DECRYPT_BASE_URL', config['decryption_service'].get('base_url', ''))
+    config['decryption_service']['endpoint'] = _get_env_or_default('DA_DECRYPT_ENDPOINT', config['decryption_service'].get('endpoint', ''))
+    config['decryption_service']['client_id'] = _get_env_or_default('DA_DECRYPT_CLIENT_ID', config['decryption_service'].get('client_id', ''))
+    config['decryption_service']['client_secret'] = _get_env_or_default('DA_DECRYPT_CLIENT_SECRET', config['decryption_service'].get('client_secret', ''))
+
+    config['vehicle_registry']['base_url'] = _get_env_or_default('DA_REGISTRY_BASE_URL', config['vehicle_registry'].get('base_url', ''))
+    config['vehicle_registry']['endpoint'] = _get_env_or_default('DA_REGISTRY_ENDPOINT', config['vehicle_registry'].get('endpoint', ''))
+
+    config['vld_auth']['base_url'] = _get_env_or_default('VLD_AUTH_BASE_URL', config['vld_auth'].get('base_url', ''))
+    config['vld_auth']['endpoint'] = _get_env_or_default('VLD_AUTH_ENDPOINT', config['vld_auth'].get('endpoint', ''))
+    config['vld_auth']['client_id'] = _get_env_or_default('VLD_AUTH_CLIENT_ID', config['vld_auth'].get('client_id', ''))
+    config['vld_auth']['client_secret'] = _get_env_or_default('VLD_AUTH_CLIENT_SECRET', config['vld_auth'].get('client_secret', ''))
+
+    config['vld_prediction_service']['base_url'] = _get_env_or_default('VLD_PREDICTION_BASE_URL', config['vld_prediction_service'].get('base_url', ''))
+    config['vld_prediction_service']['url_template'] = _get_env_or_default('VLD_PREDICTION_URL_TEMPLATE', config['vld_prediction_service'].get('url_template', ''))
+
+    config['vld_decryption_service']['base_url'] = _get_env_or_default('VLD_DECRYPT_BASE_URL', config['vld_decryption_service'].get('base_url', ''))
+    config['vld_decryption_service']['endpoint'] = _get_env_or_default('VLD_DECRYPT_ENDPOINT', config['vld_decryption_service'].get('endpoint', ''))
+    config['vld_decryption_service']['client_id'] = _get_env_or_default('VLD_DECRYPT_CLIENT_ID', config['vld_decryption_service'].get('client_id', ''))
+    config['vld_decryption_service']['client_secret'] = _get_env_or_default('VLD_DECRYPT_CLIENT_SECRET', config['vld_decryption_service'].get('client_secret', ''))
+
+    config['vld_vehicle_registry']['base_url'] = _get_env_or_default('VLD_REGISTRY_BASE_URL', config['vld_vehicle_registry'].get('base_url', ''))
+    config['vld_vehicle_registry']['endpoint'] = _get_env_or_default('VLD_REGISTRY_ENDPOINT', config['vld_vehicle_registry'].get('endpoint', ''))
+
+    return config
+
 HTML_TEMPLATE = r"""
 <!DOCTYPE html>
 <html lang="en">
@@ -1453,8 +1512,7 @@ function refreshVld(){
 def get_db_connection():
     if not MYSQL_AVAILABLE: return None
     try:
-        with open(CONFIG_FILE, 'r') as f:
-            config = json.load(f)
+        config = load_runtime_config()
         db_conf = config.get('database', {})
         db_url = os.environ.get('DATABASE_URL', '')
 
@@ -1528,11 +1586,7 @@ def _fetch_registry(registry_conf_key, token, log_label):
     if not token:
         logging.error(f"Cannot fetch {log_label} registry: auth token unavailable.")
         return []
-    try:
-        with open(CONFIG_FILE, 'r') as f:
-            config = json.load(f)
-    except Exception:
-        return []
+    config = load_runtime_config()
     reg_conf = config.get(registry_conf_key, {})
     base_url = reg_conf.get('base_url')
     endpoint = reg_conf.get('endpoint')
@@ -1737,17 +1791,11 @@ def _do_get_token(auth_conf, cache, force_refresh=False):
         return None
 
 def get_access_token(force_refresh=False):
-    try:
-        with open(CONFIG_FILE, 'r') as f: config = json.load(f)
-    except Exception:
-        return None
+    config = load_runtime_config()
     return _do_get_token(config.get('auth', {}), AUTH_TOKEN_CACHE, force_refresh)
 
 def get_vld_access_token(force_refresh=False):
-    try:
-        with open(CONFIG_FILE, 'r') as f: config = json.load(f)
-    except Exception:
-        return None
+    config = load_runtime_config()
     return _do_get_token(config.get('vld_auth', {}), VLD_AUTH_TOKEN_CACHE, force_refresh)
 
 # ── DECRYPTION ──────────────────────────────────────────────────────
@@ -1823,10 +1871,7 @@ def fetch_and_process_data(params):
     DATA_STORE = {"success": [], "failed": [], "total_eligible": 0}
     token = get_access_token()
     if not token: return {"error": "Auth Failed"}
-    try:
-        with open(CONFIG_FILE, 'r') as f: config = json.load(f)
-    except Exception:
-        return {"error": "Config missing"}
+    config = load_runtime_config()
 
     try:
         start_ist = datetime.strptime(params['start_ist_local'], '%Y-%m-%d %H:%M:%S')
@@ -1923,10 +1968,7 @@ def fetch_and_process_data_vld(params):
     VLD_DATA_STORE = {"success": [], "failed": [], "total_eligible": 0}
     token = get_vld_access_token()
     if not token: return {"error": "VLD Auth Failed"}
-    try:
-        with open(CONFIG_FILE, 'r') as f: config = json.load(f)
-    except Exception:
-        return {"error": "Config missing"}
+    config = load_runtime_config()
 
     try:
         start_local = params['start_ist_local']
@@ -1986,7 +2028,7 @@ class FleetHandler(http.server.SimpleHTTPRequestHandler):
         if self.path == '/api/login':
             data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             try:
-                with open(CONFIG_FILE, 'r') as f: config = json.load(f)
+                config = load_runtime_config()
                 auth_config = config.get('auth', {})
                 client_id = data.get('client_id', '')
                 client_secret = data.get('client_secret', '')

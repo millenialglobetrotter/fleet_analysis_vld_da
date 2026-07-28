@@ -140,8 +140,7 @@ def _html_response(start_response, html: str):
 
 
 def _load_config():
-    with open(core.CONFIG_FILE, "r", encoding="utf-8") as file_obj:
-        return json.load(file_obj)
+    return core.load_runtime_config()
 
 
 def app(environ, start_response):
